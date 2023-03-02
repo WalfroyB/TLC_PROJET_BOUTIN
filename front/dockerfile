@@ -1,0 +1,32 @@
+# Utilisation d'une image de base ALPINE, contenant une version LTS de Node.js, et npm
+FROM node:lts-alpine
+RUN apk update && apk upgrade
+
+# Définition du répertoire de travail dans le conteneur
+WORKDIR .
+
+# Copie des fichiers du projet
+COPY . .
+# Déplacement dans le dossier ./front
+WORKDIR ./front
+
+# Installation d'Angular CLI
+# RUN npm install -g @angular/cli@10.1.7
+
+# Installer les dépendances du projet /front en allant chercher dans package.json et package-lock.jsoon
+RUN npm install --unsafe-perm
+
+# Exécuter le script de construction pour l'application Angular
+RUN npm run build --unsafe-perm
+
+# Vu dans le package.json, test, lint et e2e pour exécuter les tests avec Karma et Jasmine / vérifier la qualité du code en utilisant le linter TSLint / lancer des tests d'end-to-end avec Protractor.
+RUN npm run test
+RUN npm run lint
+RUN npm run e2e
+
+# Exposer le port de l'application
+EXPOSE 80
+EXPOSE 443
+
+# Commande finale pour lancer l'application, équivalent de `npm start`
+CMD ["npm", "start"]
