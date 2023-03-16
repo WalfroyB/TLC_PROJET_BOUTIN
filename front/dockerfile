@@ -1,32 +1,31 @@
-# Utilisation d'une image de base ALPINE, contenant une version LTS de Node.js, et npm
-FROM node:lts-alpine
-RUN apk update && apk upgrade
+# dockerfile for image_front:v1.0 
 
-# Définition du répertoire de travail dans le conteneur
-WORKDIR .
+# Stage 1
 
-# Copie des fichiers du projet
-COPY . .
-# Déplacement dans le dossier ./front
-WORKDIR ./front
+  # J'utilise node:10-alpine comme image de base pour mon contneur, pour cette première partie qui est le build  
+FROM node:10-alpine AS build-step
 
-# Installation d'Angular CLI
-# RUN npm install -g @angular/cli@10.1.7
+  # Dans le conteneur, je créé un dossier app pour le front de mon application, qui devient le répertoire courant
+WORKDIR /app
 
-# Installer les dépendances du projet /front en allant chercher dans package.json et package-lock.jsoon
-RUN npm install --unsafe-perm
+  # copie du fichier package.json du répertoire local (sur la machine hôte) dans le répertoire /app dans le conteneur Docker (cf note 06)
+COPY package.json /app
 
-# Exécuter le script de construction pour l'application Angular
-RUN npm run build --unsafe-perm
+  # Je lance npm install et non npm ci (cf note 07) pour installer les dépendances spécifiées dans le package.json, dans le dossier /app du conteneur
+RUN npm install
 
-# Vu dans le package.json, test, lint et e2e pour exécuter les tests avec Karma et Jasmine / vérifier la qualité du code en utilisant le linter TSLint / lancer des tests d'end-to-end avec Protractor.
-RUN npm run test
-RUN npm run lint
-RUN npm run e2e
+  # copie de tout le contenu du répertoire local (sur la machine hôte) dans le répertoire /app du conteneur Docker
+COPY . /app
 
-# Exposer le port de l'application
-EXPOSE 80
-EXPOSE 443
+  # Lancement du build
+  # Les deux premiers -- indiquent à Docker que tous les arguments qui suivent sont des arguments pour la commande build. Les deux derniers -- définissent une option pour build: stockage de tous les fichiers résultants du build dans le répertoire /app/dist/out du conteneur Docker (cf note 08)
+RUN npm run build -- --outputPath=./dist/out
 
-# Commande finale pour lancer l'application, équivalent de `npm start`
-CMD ["npm", "start"]
+# Stage 2
+
+  #J'utilise l'image de base nginx:1-alpine pour construire mon image docker
+FROM nginx:1-alpine AS prod
+
+  # De l'étape 1, je copie tous ce qu'il y a dans /app/dist/out/ (chemin absolu!) dans /usr/share/nginx/html.
+  # Le répertoire de base de Nginx (/usr/share/nginx/html) est l'emplacement par défaut où les fichiers HTML, CSS, JavaScript et autres ressources statiques sont servis par Nginx. Cela signifie que si nous plaçons les fichiers générés dans ce répertoire, Nginx sera en mesure de les servir en réponse aux requêtes HTTP entrantes, sans avoir besoin de configuration supplémentaire
+COPY --from=build-step /app/dist/out/ /usr/share/nginx/html
