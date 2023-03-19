@@ -1,6 +1,6 @@
 # dockerfile for image_front:v1.0 
 
-# Stage 1
+# Etape 1 - BUILD DE L'APPLICATION
 
   # J'utilise node:10-alpine comme image de base pour mon contneur, pour cette première partie qui est le build  
 FROM node:10-alpine AS build-step
@@ -21,7 +21,7 @@ COPY . /app
   # Les deux premiers -- indiquent à Docker que tous les arguments qui suivent sont des arguments pour la commande build. Les deux derniers -- définissent une option pour build: stockage de tous les fichiers résultants du build dans le répertoire /app/dist/out du conteneur Docker (cf note 08)
 RUN npm run build -- --outputPath=./dist/out
 
-# Stage 2
+# ETAPE 2 - EXECUTION DE L'APPLICATION
 
   #J'utilise l'image de base nginx:1-alpine pour construire mon image docker
 FROM nginx:1-alpine AS prod
