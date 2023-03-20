@@ -1,0 +1,10 @@
+# dockerfile for image_back:v1.0 
+
+FROM alpine:3.17
+RUN apk add --no-cache git openjdk11 maven && \
+    git clone https://github.com/WalfroyB/TLC_PROJET_BOUTIN.git && \
+    rm -rf TLC_PROJECT_BOUTIN/front
+WORKDIR /TLC_PROJET_BOUTIN/api
+RUN mvn clean package -Dquarkus.package.type=uber-jar
+EXPOSE 8080
+CMD [ "java", "-jar", "target/tlcdemoApp-1.0.0-SNAPSHOT-runner.jar" ]
