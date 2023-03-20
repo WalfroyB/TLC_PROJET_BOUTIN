@@ -228,7 +228,6 @@
 										<java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
 										<maven.home>${maven.home}</maven.home>
 									</systemPropertyVariables>
-									<additionalBuildArgs>-J-Xmx2G</additionalBuildArgs>
 								</configuration>
 							</execution>
 						</executions>
