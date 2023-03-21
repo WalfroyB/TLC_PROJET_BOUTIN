@@ -3,15 +3,10 @@ services:
 
   backend:
     image: walfvonfroy/tlc_image_back_v2.0
-    container_name: 
+    container_name: image_back
+    hostname: api
     ports:
       - "8000:8000"
-    environment:
-      - DB_HOST=db
-      - DB_PORT=3306
-      - DB_NAME=tlc
-      - DB_USER=tlc
-      - DB_PASSWORD=tlc
     depends_on:
       - db
       
@@ -25,8 +20,6 @@ services:
       - MYSQL_DATABASE=tlc
       - MYSQL_USER=tlc
       - MYSQL_PASSWORD=tlc
-#    volumes:
-#      - ./db-data:/var/lib/mysql
 
   etherpad:
     hostname: etherpad
