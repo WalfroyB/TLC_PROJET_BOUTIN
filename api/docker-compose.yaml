@@ -27,7 +27,9 @@ services:
       interval: 4s
       timeout: 4s
       retries: 15
-
+    volumes:
+      - db-data:/var/lib/mysql
+    
   etherpad:
     hostname: etherpad
     image: etherpad/etherpad:latest
