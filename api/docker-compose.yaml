@@ -2,13 +2,15 @@ version: "3.8"
 services:
 
   backend:
-    image: walfvonfroy/tlc_image_back_v2.0
+    image: walfvonfroy/tlc_image_back_v2.0:latest
     container_name: image_back
     hostname: api
     ports:
       - "8000:8000"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+    restart: on-failure
       
   db:
     hostname: db
@@ -20,6 +22,11 @@ services:
       - MYSQL_DATABASE=tlc
       - MYSQL_USER=tlc
       - MYSQL_PASSWORD=tlc
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "--user=$$MYSQL_USER", "--password=$$MYSQL_PASSWORD"]
+      interval: 4s
+      timeout: 4s
+      retries: 15
 
   etherpad:
     hostname: etherpad
