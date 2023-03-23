@@ -1,9 +1,18 @@
 version: "3.8"
 services:
-
+  
+  front:
+    image: walfvonfroy/tlc_image_front_v1.0:latest # image DockerHub
+    container_name: container_front
+    hostname: front
+    restart: always
+    ports:
+      - "80:80" #port standard pour le protocole HTTP
+      - "443:443" #port standard pour le protocole HTTPS
+      
   backend:
     image: walfvonfroy/tlc_image_back_v2.0:latest
-    container_name: image_back
+    container_name: container_back
     hostname: api
     ports:
       - "8000:8000"
@@ -13,8 +22,9 @@ services:
     restart: on-failure
       
   db:
-    hostname: db
     image: mysql
+    container_name: conainer_db
+    hostname: db
     ports:
       - "3306:3306"
     environment:
@@ -27,24 +37,25 @@ services:
       interval: 4s
       timeout: 4s
       retries: 15
-    volumes:
-      - db-data:/var/lib/mysql
-    
+
   etherpad:
-    hostname: etherpad
     image: etherpad/etherpad:latest
+    container_name: container_etherpad
+    hostname: etherpad
     ports:
       - "9001:9001"
     volumes:
       - ./APIKEY.txt:/opt/etherpad-lite/APIKEY.txt
 
   mail:
-    hostname: mail
     image: bytemark/smtp
+    container_name: container_mail
+    hostname: mail
     restart: always
     ports:
       - "2525:25"
       
 volumes:
   db-data:
+
 
