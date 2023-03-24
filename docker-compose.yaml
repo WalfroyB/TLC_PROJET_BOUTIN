@@ -9,23 +9,21 @@ services:
     ports:
       - "80:80" # port standard pour le protocole HTTP
       - "443:443" # port standard pour le protocole HTTPS
-#    volumes:
-#      - .front/conf/back.conf:/etc/nginx/conf.d/back.conf
-#      - .front/conf/etherpad.conf:/etc/nginx/conf.d/etherpad.conf
-#      - .front/conf/phpmyadmin.conf:/etc/nginx/conf.d/phpmyadmin.conf
     depends_on:
       - phpmyadmin
       - etherpad
-      - back
+      - api
     restart: always 
       
-  back:
+  api:
     image: walfvonfroy/tlc_image_back_v2.0:latest
-    container_name: container_back
-    hostname: back
-    
+    container_name: container_api
+    hostname: api
+    depends_on:
+      db:
+        condition: service_healthy
     ports:
-      - "8000:8000"
+      - "8080:8080"
     restart: on-failure
       
   db:
@@ -46,8 +44,7 @@ services:
       retries: 15
     volumes:
       - .api/src/main/resources/db/migration:/docker-entrypoint-initdb.d  
-    depends_on:
-      - back
+
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin:latest
@@ -83,7 +80,7 @@ services:
     ports:
       - "25:25"
     depends_on:
-      - back
+      - api
       
 volumes:
   db-data:
