@@ -1,0 +1,109 @@
+version: "3.8"
+
+services:
+  
+  front:
+    image: walfvonfroy/tlc_image_front_v1.0:latest # image DockerHub
+    container_name: container_front
+    hostname: front
+    ports:
+      - "80:80" # port standard pour le protocole HTTP
+      - "443:443" # port standard pour le protocole HTTPS
+#    volumes:
+#      - .front/conf/back.conf:/etc/nginx/conf.d/back.conf
+#      - .front/conf/etherpad.conf:/etc/nginx/conf.d/etherpad.conf
+#      - .front/conf/phpmyadmin.conf:/etc/nginx/conf.d/phpmyadmin.conf
+    depends_on:
+      - back
+    restart: always 
+      
+  back:
+    image: walfvonfroy/tlc_image_back_v2.0:latest
+    container_name: container_back
+    hostname: back
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: on-failure
+      
+  db:
+    image: mysql
+    container_name: container_db
+    hostname: db
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=tlc
+      - MYSQL_USER=tlc
+      - MYSQL_PASSWORD=tlc
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "--user=$$MYSQL_USER", "--password=$$MYSQL_PASSWORD"]
+      interval: 4s
+      timeout: 4s
+      retries: 15
+    volumes:
+      - .api/src/main/resources/db/migration:/docker-entrypoint-initdb.d  
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: container_phpmyadmin
+    hostname: phpmyadmin
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_USER=tlc 
+      - MYSQL_PASSWORD=tlc
+      - PMA_ARBITRARY=1
+      - PMA_CONTROLPORT=3306
+      - PMA_PMADB=phpmyadmin
+      # Utilisation derrière un proxy inverse
+      # Définir la variable PMA_ABSOLUTE_URI au chemin entièrement qualifié ( https://pma.example.net/)
+      # où le proxy inverse rend phpMyAdmin disponible. 
+      - PMA_ABSOLUTE_URI=http://phpmyadmin.boutin.diverse-team.fr
+    restart: always
+    ports:
+      - 8020:8020
+  etherpad:
+    image: etherpad/etherpad:latest
+    container_name: container_etherpad
+    hostname: etherpad
+    ports:
+      - "9001:9001"
+    volumes:
+      - .api/APIKEY.txt:/opt/etherpad-lite/APIKEY.txt
+
+  mail:
+    image: bytemark/smtp
+    container_name: container_mail
+    hostname: mail
+    restart: always
+    ports:
+      - "2525:2525"
+      
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: container_phpmyadmin
+    hostname: phpmyadmin
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_USER=tlc 
+      - MYSQL_PASSWORD=tlc
+      - PMA_ARBITRARY=1
+      - PMA_CONTROLPORT=3306
+      - PMA_PMADB=phpmyadmin
+      # Utilisation derrière un proxy inverse
+      # Définir la variable PMA_ABSOLUTE_URI au chemin entièrement qualifié ( https://pma.example.net/)
+      # où le proxy inverse rend phpMyAdmin disponible. 
+      - PMA_ABSOLUTE_URI=http://phpmyadmin.boutin.diverse-team.fr
+    restart: always
+    ports:
+      - 8020:8020
+
+
+            
+volumes:
+  db-data:
+
+
