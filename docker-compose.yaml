@@ -3,7 +3,7 @@ version: "3.8"
 services:
 
   front:
-    image: walfvonfroy/image_front:5.0 # image DockerHub
+    image: walfvonfroy/image_front:7.0 # image DockerHub
     container_name: container_front
     hostname: front
     ports:
@@ -17,7 +17,7 @@ services:
       - ./back.conf:/etc/nginx/conf.d/back.conf
 
   api:
-    image: walfvonfroy/image_back:5.0
+    image: walfvonfroy/image_back:7.0
     container_name: container_api
     hostname: api
     depends_on:
