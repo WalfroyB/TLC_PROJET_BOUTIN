@@ -13,6 +13,6 @@ RUN npm run build -- --outputPath=./dist/out
 
 FROM nginx:1-alpine AS prod
 COPY --from=build-step /app/dist/out/ /usr/share/nginx/html
-COPY ./conf/back.conf etc/nginx/conf.d/back.conf
-COPY ./conf/etherpad.conf etc/nginx/conf.d/etherpad.conf
-COPY ./conf/phpmyadmin.conf etc/nginx/conf.d/phpmyadmin
+# COPY ./conf/back.conf etc/nginx/conf.d/back.conf
+# COPY ./conf/etherpad.conf etc/nginx/conf.d/etherpad.conf
+# COPY ./conf/phpmyadmin.conf etc/nginx/conf.d/phpmyadmin
