@@ -1,7 +1,7 @@
 doodle:
   usepad: true
   internalPadUrl: "http://etherpad:9001/"
-  externalPadUrl: "http://etherpad:9001/"
+  externalPadUrl: "http://etherpad-walfroy.carryboo.io"
   padApiKey: "19d89ca52bc0fa4f19d6325464d9d7a032649b9fa68c111514627081e2784b4a"
   organizermail: "walfroy.boutin.off@gmail.com"
   tmpfolder: "/tmp/excelFiles"
@@ -23,7 +23,7 @@ quarkus:
     from: test@quarkus.io
 #    host: smtp.sendgrid.net
     host: mail
-    port: 2525
+    port: 15025
 #    port: 465
 #    ssl: true
 

@@ -3,35 +3,39 @@ version: "3.8"
 services:
   
   front:
-    image: walfvonfroy/tlc_image_front_v1.0:latest # image DockerHub
+    image: walfvonfroy/image_front:2.0 # image DockerHub
     container_name: container_front
     hostname: front
     ports:
-      - "80:80" # port standard pour le protocole HTTP
-      - "443:443" # port standard pour le protocole HTTPS
+      - "15080:80" # port standard pour le protocole HTTP
+      - "15443:443" # port standard pour le protocole HTTPS
     depends_on:
       - phpmyadmin
       - etherpad
       - api
     restart: always 
+    volumes:
+      - ./back.conf:/etc/nginx/conf.d/back.conf
+      #- ./front/conf/etherpad.conf:/etc/nginx/conf.d/etherpad.conf
+      #- ./front/conf/phpmyadmin.conf:/etc/nginx/conf.d/phpmyadmin.conf
       
   api:
-    image: walfvonfroy/tlc_image_back_v2.0:latest
+    image: walfvonfroy/image_back:2.0
     container_name: container_api
     hostname: api
     depends_on:
       db:
         condition: service_healthy
-    ports:
-      - "8080:8080"
+#    ports:
+#      - "15081:8080"
     restart: on-failure
       
   db:
     image: mysql
     container_name: container_db
     hostname: db
-    ports:
-      - "3306:3306"
+#    ports:
+#      - "15306:3306"
     environment:
       - MYSQL_ROOT_PASSWORD=root
       - MYSQL_DATABASE=tlc
@@ -43,7 +47,7 @@ services:
       timeout: 4s
       retries: 15
     volumes:
-      - .api/src/main/resources/db/migration:/docker-entrypoint-initdb.d  
+      - ./migration:/docker-entrypoint-initdb.d  
 
 
   phpmyadmin:
@@ -59,7 +63,7 @@ services:
       - PMA_HOST=db
     restart: always
     ports:
-      - 8020:8020
+      - 15020:8080
     depends_on:
       - db
       
@@ -68,9 +72,9 @@ services:
     container_name: container_etherpad
     hostname: etherpad
     ports:
-      - "9001:9001"
+      - "15091:9001"
     volumes:
-      - .api/APIKEY.txt:/opt/etherpad-lite/APIKEY.txt
+      - ./APIKEY.txt:/opt/etherpad-lite/APIKEY.txt
       
   mail:
     image: bytemark/smtp
@@ -78,7 +82,7 @@ services:
     hostname: mail
     restart: always
     ports:
-      - "25:25"
+      - "15025:25"
     depends_on:
       - api
       
