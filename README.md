@@ -1,5 +1,6 @@
 # Techniques logicielles pour le Cloud Computing - Projet  
 
+**Rendu projet** : 24/03/2023 - 23h59 sur  https://forms.gle/ypoaNwh9FmwC2kyk7  
 **Enoncé du projet** : https://hackmd.diverse-team.fr/s/SJqu5DjSD#projet  
   
 [Vidéo 1](https://drive.google.com/file/d/1GQbdgq2CHcddTlcoHqM5Zc8Dw5o_eeLg/preview): application type Doodle (sondage, agenda, notepad partagé, synchro calendrier, ..), en QUARKUS côté serveur (BackEnd) et en ANGULAR côté client (FrontEnd).  
@@ -79,8 +80,16 @@ Noms de domaines demandés:
     Dans mon navigateur, je vérifie que le serveur fonctionne sur : http://148.60.11.139 (le port 80 étant le port par défaut, ça fonctionne).    
     ![](https://codimd.math.cnrs.fr/uploads/upload_16c1385e8b8843a70232e44fab26f1f0.png)
  
-OK JUSQUE LA.
-
+OK JUSQUE LA.  
+Pour désinstaller Nginx:  
+```
+sudo systemctl stop nginx
+sudo systemctl disable nginx
+sudo apt-get remove nginx
+sudo apt-get purge nginx
+sudo rm -rf /etc/nginx
+sudo apt autoremove
+```
 # Tâche 1  
 
 Je "fork" le projet sur mon GitHub: https://github.com/WalfroyB/TLC_PROJET_BOUTIN.  
@@ -384,53 +393,56 @@ Je me place dans mon dossier `front` :
   - mon dockerfile (en deux parties - multi-staging) est le suivant :  
   ```dockerfile
 # dockerfile for image_front:v1.0 
+
 # Stage 1
 
-# J'utilise node:10-alpine comme image de base pour mon contneur, pour cette première partie qui est le build  
+ # J'utilise node:10-alpine comme image de base pour mon contneur, pour cette première partie qui est le build  
 FROM node:10-alpine AS build-step
-# Dans le conteneur, je créé un dossier app pour le front de mon application, qui devient le répertoire courant
+
+ # Dans le conteneur, je créé un dossier app pour le front de mon application, qui devient le répertoire courant
 WORKDIR /app
-# copie du fichier package.json du répertoire local (sur la machine hôte) dans le répertoire /app dans le conteneur Docker (cf note 06)
+
+ # copie du fichier package.json du répertoire local (sur la machine hôte) dans le répertoire /app dans le conteneur Docker (cf note 06)
 COPY package.json /app
-# Je lance npm install et non npm ci (cf note 07) pour installer les dépendances spécifiées dans le package.json, dans le dossier /app du conteneur
+
+ # Je lance npm install et non npm ci (cf note 07) pour installer les dépendances spécifiées dans le package.json, dans le dossier /app du conteneur
 RUN npm install
-# copie de tout le contenu du répertoire local (sur la machine hôte) dans le répertoire /app du conteneur Docker
+
+ # copie de tout le contenu du répertoire local (sur la machine hôte) dans le répertoire /app du conteneur Docker
 COPY . /app
-# Lancement du build
-# Les deux premiers -- indiquent à Docker que tous les arguments qui suivent sont des arguments pour la commande build. Les deux derniers -- définissent une option pour build: stockage de tous les fichiers résultants du build dans le répertoire /app/dist/out du conteneur Docker (cf note 08)
+
+ # Lancement du build
+ # Les deux premiers -- indiquent à Docker que tous les arguments qui suivent sont des arguments pour la commande build. Les deux derniers -- définissent une option pour build: stockage de tous les fichiers résultants du build dans le répertoire /app/dist/out du conteneur Docker (cf note 08)
 RUN npm run build -- --outputPath=./dist/out
 
 # Stage 2
-J'utilise l'image de base nginx:1-alpine pour construire mon image docker
+
+# J'utilise l'image de base nginx:1-alpine pour construire mon image docker
 FROM nginx:1-alpine AS prod
-# De l'étape 1, je copie tous ce qu'il y a dans /app/dist/out/ (chemin absolu!) dans /usr/share/nginx/html.
-# Le répertoire de base de Nginx (/usr/share/nginx/html) est l'emplacement par défaut où les fichiers HTML, CSS, JavaScript et autres ressources statiques sont servis par Nginx. Cela signifie que si nous plaçons les fichiers générés dans ce répertoire, Nginx sera en mesure de les servir en réponse aux requêtes HTTP entrantes, sans avoir besoin de configuration supplémentaire
+
+ # De l'étape 1, je copie tous ce qu'il y a dans /app/dist/out/ (chemin absolu!) dans /usr/share/nginx/html.
+ # Le répertoire de base de Nginx (/usr/share/nginx/html) est l'emplacement par défaut où les fichiers HTML, CSS, JavaScript et autres ressources statiques sont servis par Nginx. Cela signifie que si nous plaçons les fichiers générés dans ce répertoire, Nginx sera en mesure de les servir en réponse aux requêtes HTTP entrantes, sans avoir besoin de configuration supplémentaire
 COPY --from=build-step /app/dist/out/ /usr/share/nginx/html
   ```  
   
 A NOTER: je rajoute ``"skipLibCheck"= true``, au fichier tsconfig.json, sinon j'ai une erreur lors du build.  
 - je construis mon image docker `image_front`, taggée v1.0 :   
-```sudo docker build -t image_front:v1.0 -f dockerfile .```  
+```sudo docker build -t image_front:image_front_v1.0 -f dockerfile .```  
 - je l'enregistre dans image_front.tar  
 `sudo docker save image_front:v1.0 -o image_front.tar`  
+`sudo chmod a+rwx image_front.tar`  
 - je lance mon conteneur:  
-`sudo docker run -p 80:80 -p 443:443 image_front:v1.0`  
+`sudo docker run -p 80:80 -p 443:443 image_front:image_front_v1.0`  
+
 - je teste le bon fonctionnement en local :  
   http://localhost:80
-![](https://codimd.math.cnrs.fr/uploads/upload_5d4112ff7c493a1984c51707e4d1bf2c.png)
+![](https://codimd.math.cnrs.fr/uploads/upload_5d4112ff7c493a1984c51707e4d1bf2c.png)  
 
-**Pour démarrer le conteneur automatiquement, j'utiliserais plus tard un dockercompose.**  
+**Pour démarrer le conteneur automatiquement, j'utiliserais plus tard un docker-compose.**  
 
 ## 1.2-Partie BACKEND  
   
 La partie Back-end est développée en Quarkus.  
-
-Pré-requis: 
-
-`sudo apt  install docker-compose`  
-`sudo apt install fastjar`  
-`sudo apt install openjdk-19-jdk-headless`  
-`y`  
   
 ### 1.2.1 - Test en local
 
@@ -450,56 +462,434 @@ Malgré quelques WARNING, j'obtiens:
 - l'exécution de l'application  
 `java -jar target/tlcdemoApp-1.0.0-SNAPSHOT.jar`  
 ![](https://codimd.math.cnrs.fr/uploads/upload_3b6c3c86a9d07fcc8f4a3bb79ef0bf8f.png)  
-- le fichier `tlcdemoApp-1.0.0-SNAPSHOT.jar` n'est pas exécutable, car il faut modifier son fichier `manifest.mf`.  
-- je décompresse l'archive:  
-`jar xvf target/tlcdemoApp-1.0.0-SNAPSHOT.jar`  
-- je modfie `META-INF/MANIFEST.MF`:  
-```mf
-Manifest-Version: 1.0
-Archiver-Version: Plexus Archiver
-Created-By: Apache Maven 3.6.3
-Built-By: walfroy
-Build-Jdk: 19.0.2
+- le fichier `tlcdemoApp-1.0.0-SNAPSHOT.jar` n'est pas exécutable, car il faut modifier son fichier `manifest.mf`. 
+  
+- **Je change de méthode et installe GraalVM**:
+Je télécharge dans mes programmes `graalvm-ce-java19-linux-amd64-22.3.1.tar.gz`  
+Je l'extrais: `tar xvzf graalvm-ce-java19-linux-amd64-22.3.1.tar.gz`  
+Je vais dans mon dossier `/api`:  
+```bash
+export JAVA_HOME=/home/walfroy/Programmes/graalvm-ce-java19-22.3.1
+export PATH=$JAVA_HOME/bin:$PATH
+gu install native-image
 ```
-- la création d'un exécutable natif dans un conteneur  
-`./mvnw package -Pnative -Dquarkus.native.container-build=true`
-- l'exécution
-``
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+- Je modifie le fichier `pom.xml` et rajoute une ligne `<additionalBuildArgs>-J-Xmx2G</additionalBuildArgs>` pour spécifier avec l'argument `-J-Xmx2G` une taille de mémoire maximale de 2 Go pour la machine virtuelle Java dans la construction de Maven (sinon ça me donne des erreurs), dans:   
+```xml
+    </systemPropertyVariables>
+    <additionalBuildArgs>-J-Xmx2G</additionalBuildArgs>
+</configuration>
+```    
+- Je créé un exécutable natif et je le lance:   
+`sudo ./mvnw package -Pnative`  
+ou
+`sudo ./mvnw package -Pnative -Dquarkus.native.native-image-xmx=2g`
+puis
+`./target/tlcdemoApp-1.0.0-SNAPSHOT-runner
+`  
+  
+  ![](https://codimd.math.cnrs.fr/uploads/upload_4404e69f970b03a7853492c9769a4696.png)
+  
+Lorsque je me rends sur http://localhost:8080, j'obtiens : 
+  
+![](https://codimd.math.cnrs.fr/uploads/upload_74c08413f35130088fca4f6e7d21fa04.png)
   
   
-## 1.3-Partie BdD    
+### 1.2.2 - Lancement du backend via un dockerfile  
+
+Je consulte https://quarkus.io/guides/building-native-image.  
+   
+N'arrivant pas à construire un dockerfile qui aille au bout du build, je teste en local la troisième méthode:  
+```
+./mvnw clean package -Dquarkus.package.type=uber-jar
+```
+```
+java -jar target/tlcdemoApp-1.0.0-SNAPSHOT-runner.jar
+```
+```
+sudo docker build -t image_back:v1.0 -f dockerfile .
+```
+```
+sudo docker run -p 80:80 -p 443:443 image_back:v1.0
+```
+Celà fonctionne encore en local.  
+  
+Je construis le dockerfile suivant:  
+```dockerfile
+# dockerfile for image_back:v1.0 
+
+# Utilisation d'une image de base alpine 
+FROM alpine:3.17
+
+# Installation de trois paquets, git, maven et openjdk11
+RUN apk add git openjdk11 maven --no-cache
+
+# Clonage du repo GitHub source et suppression de la partie front
+RUN git clone https://github.com/WalfroyB/TLC_PROJET_BOUTIN.git
+RUN rm -rf TLC_PROJECT_BOUTIN/front
+
+# Définition du répertoire de travail pour les commandes suivantes
+WORKDIR TLC_PROJET_BOUTIN/api
+
+# Construction d'un über-jar pour mon application
+RUN mvn clean package -Dquarkus.package.type=uber-jar
+
+# Exposition du port 8080
+EXPOSE 8080
+
+# Lancement de l'application
+CMD [ "java", "-jar", "target/tlcdemoApp-1.0.0-SNAPSHOT-runner.jar" ]
+```
+
+Je le simplifie pour avoir le moins de commandes possibles:  
+```dockerfile
+# dockerfile for image_back:v1.0 
+
+FROM alpine:3.17
+RUN apk add --no-cache git openjdk11 maven && \
+    git clone https://github.com/WalfroyB/TLC_PROJET_BOUTIN.git && \
+    rm -rf TLC_PROJECT_BOUTIN/front
+WORKDIR /TLC_PROJET_BOUTIN/api
+RUN mvn clean package -Dquarkus.package.type=uber-jar
+EXPOSE 8080
+CMD [ "java", "-jar", "target/tlcdemoApp-1.0.0-SNAPSHOT-runner.jar" ]
+```
+Je lance les commandes:  
+`sudo docker build -t image_back:image_back_v1.0 -f dockerfile .`
+`sudo docker run -p 80:80 -p 443:443 image_back:image_back_v1.0`
+  
+Sur http://localhost:8080, j'obtiens ma page front. 
+  
+J'optimise mon dockerfile en taggant une v2.0 en faisant du multi-stagging:  
+```dockerfile
+# dockerfile for image_back:v2.0 
+
+# Stage 1 - BUILD
+FROM alpine:3.17 AS build-step
+RUN apk add --no-cache git maven && \
+    git clone https://github.com/WalfroyB/TLC_PROJET_BOUTIN.git && \
+    rm -rf TLC_PROJECT_BOUTIN/front
+WORKDIR /TLC_PROJET_BOUTIN/api
+RUN mvn clean package -Dquarkus.package.type=uber-jar
+
+# Stage 2 - RUN
+FROM alpine:3.17 AS prod
+RUN apk add --no-cache openjdk11 && \
+WORKDIR /app
+COPY --from=build-step /TLC_PROJET_BOUTIN/api/target/tlcdemoApp-1.0.0-SNAPSHOT-runner.jar /app/
+EXPOSE 8080
+CMD ["java", "-jar", "tlcdemoApp-1.0.0-SNAPSHOT-runner.jar"]
+```  
+  
+La différence entre les deux images `image_back:image_back_v1.0` et `image_back:image_back_v2.0` est de 264MB:  
+![](https://codimd.math.cnrs.fr/uploads/upload_7cbd1f95fc7777a4e61c4d77c07220a8.png)
+  
+  
+## 1.3-Partie docker-compose    
+    
+Tout d'abord je vais placer mes images docker dans deux répertoires de mon Docker Hub :  
+![](https://codimd.math.cnrs.fr/uploads/upload_31675e3a72914962c234bf1d2c53bd79.png)
+  
+Mes images sont les suivantes:  
+![](https://codimd.math.cnrs.fr/uploads/upload_4aeb8a1ecb9735ed011aafb2f2c52d77.png)  
+  
+Pour la partie back  
+Etape 1 - TAG  
+```
+# Après tag, <nom_image>:<tag> <nom_répertoire>
+sudo docker tag image_back:image_back_v2.0 walfvonfroy/tlc_image_back_v2.0
+```
+Etape 2 - PUSH  
+```
+sudo docker push walfvonfroy/tlc_image_back_v2.0
+```
+Pour la partie front  
+```
+sudo docker tag image_front walfvonfroy/tlc_image_front_v1.0
+sudo docker push walfvonfroy/tlc_image_front_v1.0
+``` 
+![](https://codimd.math.cnrs.fr/uploads/upload_4521c6ed56330e71a05593f51a90171e.png)
+
+Mes images disponibles sur Docker Hub seront disponibles avec les noms `walfvonfroy/tlc_image_front_v1.0` et `walfvonfroy/tlc_image_back_v2.0`.  
+
+Les conteneurs seront `image_front:image_front_v1.0` et `image_back:image_back_v2.0`.  
+
+Lorsque je lance mon conteneur du front en local avec `sudo docker run -p 80:80 walfvonfroy/tlc_image_front_v1.0
+`, je constate qu'un conteneur docker est lancé et que mon front est disponible à http://localhost:80 .  
+![](https://codimd.math.cnrs.fr/uploads/upload_7f75fb965737970aed4936abe943b471.png)
+
+
+Lorsque je lance mon conteneur du back en local avec `sudo docker run -p 8080:8080 walfvonfroy/tlc_image_back_v2.0`je constate qu'un conteneur docker est lancé et que mon back est disponible à http://localhost:8080 .  
+![](https://codimd.math.cnrs.fr/uploads/upload_3f7b30f082ade827c688a72f959570ba.png)
+
+Maintenant, je vais construire mon `docker-compose.yml` à l'aide de l'exemple donné.
+  
+https://docs.docker.com/compose/compose-file/compose-file-v3/#depends_on  
+Je consulte sur `depends_on` et il est mentionné que le service `back`, avec `depends_on` pour la `db`, n'attend pas que `db` soit “prête” avant de lancer le `back`, et que je peux contrôler l'ordre de démarrage avec `healthcheck`.  
+  
+https://docs.docker.com/compose/compose-file/#restart  
+Ce `healthcheck` doit être effectué jusqu'à ce que ça fonctionne, avec `restart: on-failure` ou `restart: always`.  
+  
+https://docs.docker.com/compose/compose-file/#healthcheck  
+Donc je vais d'abord m'assurer que le service `db` soit démarré et sain avec un `healthcheck`, pour que le service `back` puisse être lancé correctement à son tour.  
+  
+Pour la commande de `test`, je trouve des explications sur https://stackoverflow.com/questions/54479941/how-to-init-mysql-database-in-docker-compose/54480687#54480687  
+  
+Pour ne pas perdre les données, j'inclue au service `db` un volume `db-data` monté sur `/var/lib/mysql` qui stockera les données de la base de données.  
+  
+Je consulte également les liens pour :   
+- db (image:mysql): https://hub.docker.com/_/mysql
+- mail (image:bytemark/smtp) https://hub.docker.com/r/bytemark/smtp
+- etherpad (image:etherpad/etherpad:latest) https://hub.docker.com/r/etherpad/etherpad
+- phpmy admin (image:phpmyadmin/phpmyadmin:latest) https://hub.docker.com/layers/phpmyadmin/phpmyadmin/latest/images/sha256-0d951ee3bec76c5d7083122f5db509ebfa6c209efc5e70f1d47af2e13a34f543?context=explore
+
+```YAML
+version: "3.8"
+services:
+  
+  front:
+    image: walfvonfroy/tlc_image_front_v1.0:latest # image DockerHub
+    container_name: container_front
+    hostname: front
+    restart: always
+    ports:
+      - "80:80" #port standard pour le protocole HTTP
+      - "443:443" #port standard pour le protocole HTTPS
+      
+  backend:
+    image: walfvonfroy/tlc_image_back_v2.0:latest
+    container_name: container_back
+    hostname: api
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: on-failure
+      
+  db:
+    image: mysql
+    container_name: conainer_db
+    hostname: db
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=tlc
+      - MYSQL_USER=tlc
+      - MYSQL_PASSWORD=tlc
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "--user=$$MYSQL_USER", "--password=$$MYSQL_PASSWORD"]
+      interval: 4s
+      timeout: 4s
+      retries: 15
+
+  etherpad:
+    image: etherpad/etherpad:latest
+    container_name: container_etherpad
+    hostname: etherpad
+    ports:
+      - "9001:9001"
+    volumes:
+      - ./APIKEY.txt:/opt/etherpad-lite/APIKEY.txt
+
+  mail:
+    image: bytemark/smtp
+    container_name: container_mail
+    hostname: mail
+    restart: always
+    ports:
+      - "2525:25"
+      
+volumes:
+  db-data:
+
+```
+
+Lorsque je lance la comande `sudo docker-compose up -d` dans mon dossier `/api`, j'obtiens:  
+![](https://codimd.math.cnrs.fr/uploads/upload_f96ae4d5cde1f40e72486894a227f60b.png)  
+  
+Je teste les ports en localhost:  
+![](https://codimd.math.cnrs.fr/uploads/upload_cda71c3ff3044b43f6603b49f8a67db1.png)
+
+Maintenant, je dois résoudre le problème des ports:  
+`0.0.0.0:8000->8000/tcp, :::8000->8000/tcp, 8080/tcp`  
+`0.0.0.0:3306->3306/tcp, :::3306->3306/tcp, 33060/tcp`  
+`0.0.0.0:9001->9001/tcp, :::9001->9001/tcp`  
+`0.0.0.0:2525->25/tcp`  
+  
+`0.0.0.0:8000->8000/tcp, :::8000->8000/tcp, 8080/tcp` signifie que:  
+- Le port 8000 du container est lié (ou "mapped") au port 8000 de l'hôte (0.0.0.0:8000->8000/tcp) : cela permet d'accéder à l'API du backend en utilisant l'adresse IP de l'hôte et le port 8000.  
+- Le port 8000 du container est également lié à une adresse IPv6 (:::8000->8000/tcp).  
+- Le port 8080/tcp est également exposé par le container, mais n'est pas lié à un port de l'hôte. Cela signifie que si l'application à l'intérieur du container écoute sur le port 8080, il est possible de s'y connecter depuis d'autres containers dans le même réseau Docker.  
+
+Etant donné que pour mon back, je vais utiliser une VM (walf09) dont l'adresse IP est 148.60.11.60 (http://walf09.istic.univ-rennes1.fr ), je dois changer le 0.0.0.0.   
+
+Dans api/src/main/resources/application.yml, qui est le fichier de configuration, je vais modifier `internalPadUrl: "http://localhost:9001/"` en  `internalPadUrl: "http://148.60.11.60:9001/"`.
+
+**Utile** `sudo docker rm -f container_back container_front container_phpmyadmin container_db container_etherpad container_mail`
+  
+# - Tâche 2
+
+Je vais me servir d'un fichier nginx du front pour router les requêtes, ainsi il sera plus facile à modifier.  
+  
+## 2.1 - Ecriture des fichier de conf
+  
+Dans`/api`, je créé un dossier `conf` dans lequel je vais créer trois fichiers:  
+- `etherpad.conf`:  du nom de mon service `etherpad` dans le `docker-compose.yml`:
+- `back.conf`:  du nom de mon service `back` dans le `docker-compose.yml`:
+- `phpmyadmin.conf`:  du nom de mon service `phpmyadmin` dans le `docker-compose.yml`:
+Je vais utiliser les lignes de code données pour la configuration des trois services dans un fichier `nginx.conf`.  
+En première approche, je vais devoir indiquer:
+- les noms de domaine ; 
+- les conteneurs associés ;  
+- autres modifications 1 ;
+- autresmodifications 2 .
+
+```nginx.conf
+server {
+    listen       80;
+    listen  [::]:80;
+    # server name to change based on your own domain name for doodle
+    #server_name  doodle.tlc.fr;
+    server_name  boutin.diverse-team.fr;
+    
+    location / {
+        proxy_pass http://front:80;
+        proxy_set_header Host $http_host;
+        try_files $uri $uri/ /index.html?$args;
+        
+    location /api {
+        proxy_pass http://back:8080/api;
+        proxy_set_header Host $http_host;
+    }
+    
+    
+    location / {
+        root   /usr/share/nginx/html;
+        index  index.html index.htm;
+        try_files $uri $uri/ /index.html?$args;
+
+    }
+
+    error_page   500 502 503 504  /50x.html;
+    location = /50x.html {
+        root   /usr/share/nginx/html;
+    }
+}
+
+server {
+    listen       80;
+    listen  [::]:80;
+    # server name to change based on your own domain name for doodle
+    server_name  myadmin.tlc.fr;
+
+    location / {
+        proxy_pass http://myadmin:80;
+        proxy_set_header Host $http_host;
+
+    }
+ 
+    error_page   500 502 503 504  /50x.html;
+    location = /50x.html {
+        root   /usr/share/nginx/html;
+    }
+}
+
+server {
+    listen       80;
+    listen  [::]:80;
+    # server name to change based on your own domain name for doodle
+    server_name  pad.tlc.fr;
+
+    location / {
+        proxy_pass http://etherpad:9001;
+        proxy_set_header Host $http_host;
+        proxy_http_version 1.1;
+	proxy_set_header Upgrade $http_upgrade;
+	proxy_set_header Connection "upgrade";
+	proxy_set_header X-Real-IP  $remote_addr;
+	proxy_set_header X-Forwarded-For $remote_addr;
+    }
+
+    error_page   500 502 503 504  /50x.html;
+    location = /50x.html {
+        root   /usr/share/nginx/html;
+    }
+}
+```
+  
+  
+## 2.2 - Modification du dockerfile du front  
+  
+J'ai créé un fichier `nginx.conf` (cf 2.1) que je vais placer dans le même répertoire que le `dockerfile` du front.  
+  
+  Je modifie le `dockerfile` du front (à la dernière ligne) pour permettre la prise en compte de ce fichier `nginx.conf`, de la manière suivante :  
+```dockerfile
+# dockerfile for image_front:v1.0 
+
+# Stage 1 - BUILD
+
+FROM node:10-alpine AS build-step
+WORKDIR /app
+COPY package.json /app
+RUN npm install
+COPY . /app
+RUN npm run build -- --outputPath=./dist/out
+
+# Stage 2 - PROD
+
+FROM nginx:1-alpine AS prod
+COPY --from=build-step /app/dist/out/ /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/nginx.conf
+```    
+
+Je push cette version 2.0 de mon dockerfile sur mon Docker Hub:  
+``` dockerfile
+sudo docker build -t walfvonfroy/image_front:2.0 -f dockerfile .
+sudo docker push walfvonfroy/image_front:2.0
+``` 
+
+## 2. - Mise en ligne de `nginx.conf` et du dockerfile du front  
+  
+Je push mon fichier `nginx.conf` sur mon GitHub.
+    
+  Je push ma version 2.0 de mon dockerfile sur mon Docker Hub:  
+``` dockerfile
+sudo docker build -t image_front:image_front_v2.0 -f dockerfile .
+sudo docker run -p 80:80 image_front:image_front_v2.0
+sudo docker tag image_front walfvonfroy/tlc_image_front_v2.0
+sudo docker push walfvonfroy/tlc_image_front_v2.0
+``` 
+  
+# - Tâche 3
+
+https://walfroy.carryboo.io
+https://etherpad-walfroy.carryboo.io
+https://myadmin-walfroy.carryboo.io
+
+
+
+# - Tâche 4
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
   
   
 **Notes personnelles**:  
@@ -547,75 +937,3 @@ Le choix de créer un sous-dossier `out` est simplement une convention pour évi
 En résumé, le choix de placer les fichiers générés par le build dans `./dist/out` est une convention courante pour les applications web, qui permet de séparer les fichiers de build temporaires et les fichiers optimisés pour la production.    
   
 **Note 09**:  
-                    
-                    
-ARCHIVE ARCHIVE ARCHIVE ARCHIVE ARCHIVE ARCHIVE
-  
- 
-Je vérifie le port 443 :   
-    >```sudo lsof -i :443```. Je n'ai rien!  
-    Je me rends à /etc/nginx et j'ouvre le fichier nginx.  
-    > ```cd ..```  
-    > ```cd ..```  
-    > ```cd./etc/nginx/sites-enabled```  
-    > ```sudo touch boutintest.diverse-team.fr.conf```  
-    > ```sudo nano boutintest.diverse-team.fr.conf```  
-  
-J'écris dans le fichier de conf de mon nom de domaine que je viens de créer :  
-```conf
-server {
-    listen 80;
-    server_name boutintest.diverse-team.fr;
-    root /var/www/html; # spécifie le répertoire racine pour votre site web
-
-    # Paramètres pour le site web
-    index index.html index.htm;
-
-    # Les fichiers statiques tels que les images, les feuilles de style et les scripts JavaScript sont servis directement
-    location / {
-        try_files $uri $uri/ =404;
-    }
-}
-```   
-
-`sudo nano /etc/nginx/sites-available/votre_application`
-
-ARCHIVE ARCHIVE ARCHIVE               
-
-Demande d'accès externe vers le port 80 (http) et 443 (https), TICKETS n°278436 et n°278434 :  
-  
-![](https://codimd.math.cnrs.fr/uploads/upload_3fe8e54374486bca7ffcee5101a87aa9.png)  
-  
-![](https://codimd.math.cnrs.fr/uploads/upload_f6f992dfe58ce4bc35e8191d4c8b21ea.png)  
-
-Noms de domaines demandés: 
-- boutin.diverse-team.fr associé à walf09 (148.60.11.60) ;  
-- boutintest.diverse-team.fr associé à walf10 (148.60.11.139).  
-  
-# Tâche 1  
-
-Je "fork" le projet sur mon GitHub: https://github.com/WalfroyB/TLC_PROJET_BOUTIN.  
-  ![](https://codimd.math.cnrs.fr/uploads/upload_4cf2c9ee61e324eb88c738ac0c596c4e.png)  
-  
-  J'installe mes outils :  
-- ANGULAR CLI : ```sudo apt-get install angular cli``` pour la partie frontend ;  
-- Node JS :   ???    
-- QUARKUS : ```sudo apt-get install quarkus``` pour la partie backend ;  
-- Nginx : ```sudo apt-get install nginx```  ;  
-- Truc X :   
-- Truc Y :   
-  
-  
-  
-**Notes personnelles**:
-  
-**Note 01**: Quarkus est un framework d'application Java, conçu pour fonctionner nativement avec Kubernetes, OpenJDK HotSpot et GraalVM. Il offre une faible empreinte mémoire et un temps de démarrage réduit.
-  
-**Note 02**:  Angular est un framework pour clients, open source, qui permet la création d’applications Web et plus particulièrement d'applications Web monopages : des applications Web accessibles via une page Web unique qui permet de fluidifier l’expérience utilisateur et d’éviter les chargements de pages à chaque nouvelle action.
-   
-**Note 03**:  
-  
-**Note 04**:  
-    
-**Note 05**:  
-          
