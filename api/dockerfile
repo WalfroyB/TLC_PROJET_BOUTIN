@@ -13,5 +13,4 @@ FROM alpine:3.17 AS prod
 RUN apk add --no-cache openjdk11
 WORKDIR /app
 COPY --from=build-step /TLC_PROJET_BOUTIN/api/target/tlcdemoApp-1.0.0-SNAPSHOT-runner.jar /app/
-EXPOSE 8080
 CMD ["java", "-jar", "tlcdemoApp-1.0.0-SNAPSHOT-runner.jar"]
