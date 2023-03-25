@@ -35,9 +35,9 @@ public class PollResourceEx {
 
 	@ConfigProperty(name = "doodle.usepad")
 	boolean usePad = true;
-	@ConfigProperty(name = "doodle.internalPadUrl", defaultValue="http://etherpad-walfroy.carryboo.io/p/")
+	@ConfigProperty(name = "doodle.internalPadUrl", defaultValue="http://etherpad:9001/")
 	String padUrl = "";
-	@ConfigProperty(name = "doodle.externalPadUrl", defaultValue="http://etherpad-walfroy.carryboo.io/p/")
+	@ConfigProperty(name = "doodle.externalPadUrl", defaultValue="https://etherpad-walfroy.carryboo.io/p/")
 	String externalPadUrl = "";
 	@ConfigProperty(name = "doodle.padApiKey")
 	String apikey = "";
