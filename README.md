@@ -31,7 +31,7 @@ Dépôts Docker Hub:
   
 ## 2.1 - Dockerfile du frontend (Angular)  
   
-Ce dockerfile utilise le multi-stage
+Ce dockerfile utilise le multi-stage en m'inspirant de ce [lien](https://stackoverflow.com/questions/64842509/deploying-angular-app-in-container-fails-to-run-ng-command).
   
 ```dockerfile
 # dockerfile for image_front:v1.0 
