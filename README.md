@@ -34,7 +34,7 @@ Dépôts Docker Hub:
 Ce dockerfile utilise le multi-stage en m'inspirant de ce [lien](https://stackoverflow.com/questions/64842509/deploying-angular-app-in-container-fails-to-run-ng-command).
   
 ```dockerfile
-# dockerfile for image_front:v1.0 
+# dockerfile for image_front:v8.0 
 
 # Stage 1
 
@@ -74,7 +74,7 @@ A NOTER: je rajoute ``"skipLibCheck"= true``, au fichier `tsconfig.json`, sinon 
   
 Ce dockerfile utilise également le multi-stage, pour produire lors du BUILD, puis ne conserver que le `tlcdemoApp-1.0.0-SNAPSHOT-runner.jar`  
 ``` dockerfile
-# dockerfile for image_back:v7.0 
+# dockerfile for image_back:v8.0 
 
 # Stage 1 - BUILD
 FROM alpine:3.17 AS build-step
@@ -103,7 +103,7 @@ version: "3.8"
 services:
 
   front:
-    image: walfvonfroy/image_front:7.0 # image DockerHub
+    image: walfvonfroy/image_front:8.0 # image DockerHub
     container_name: container_front
     hostname: front
     ports:
@@ -117,7 +117,7 @@ services:
       - ./back.conf:/etc/nginx/conf.d/back.conf
 
   api:
-    image: walfvonfroy/image_back:7.0
+    image: walfvonfroy/image_back:8.0
     container_name: container_api
     hostname: api
     depends_on:
@@ -175,4 +175,7 @@ services:
 volumes:
   db-data:
  ```
+ 
+ Pour plus de précisions sur le travail effectué, se reporter au fichier `CR_PROJET.md` situé dans le dépôt Docker, notamment pour les modificatins minimes efectuées sur les autres fichiers.
+
 # FIN 
